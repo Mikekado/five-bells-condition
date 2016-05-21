@@ -467,4 +467,51 @@ describe('Reader', function () {
       assert.equal(this.reader.cursor, 15)
     })
   })
+
+  describe('peekVarOctetString', function () {
+    it('should read a zero-length variable-length octet string', function () {
+      const result = this.reader.peekVarOctetString()
+
+      assert.equal(result.toString('hex'), '')
+      assert.equal(this.reader.cursor, 0)
+    })
+
+    it('should read a one-byte variable-length octet string', function () {
+      this.reader.skip(1)
+      const result = this.reader.peekVarOctetString()
+
+      assert.equal(result.toString('hex'), '02')
+      assert.equal(this.reader.cursor, 1)
+    })
+
+    it('should read a seven-byte variable-length octet string', function () {
+      this.reader.skip(7)
+      const result = this.reader.peekVarOctetString()
+
+      assert.equal(result.toString('hex'), '08090a0b0c0d0e')
+      assert.equal(this.reader.cursor, 7)
+    })
+  })
+
+  describe('skipVarOctetString', function () {
+    it('should skip a zero-length variable-length octet string', function () {
+      this.reader.skipVarOctetString()
+
+      assert.equal(this.reader.cursor, 1)
+    })
+
+    it('should skip a one-byte variable-length octet string', function () {
+      this.reader.skip(1)
+      this.reader.skipVarOctetString()
+
+      assert.equal(this.reader.cursor, 3)
+    })
+
+    it('should skip a seven-byte variable-length octet string', function () {
+      this.reader.skip(7)
+      this.reader.skipVarOctetString()
+
+      assert.equal(this.reader.cursor, 15)
+    })
+  })
 })

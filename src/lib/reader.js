@@ -179,7 +179,22 @@ class Reader {
     const length = this.readUInt8()
 
     if (length & Reader.HIGH_BIT) {
-      return this.readUInt(length & Reader.LOWER_SEVEN_BITS)
+      const lengthPrefixLength = length & Reader.LOWER_SEVEN_BITS
+      if (lengthPrefixLength > Reader.MAX_LENGTH_PREFIX_LENGTH) {
+        throw new ParseError('Length prefix length too large (> ' +
+          Reader.MAX_LENGTH_PREFIX_LENGTH + '): ' + lengthPrefixLength)
+      }
+
+      const actualLength = this.readUInt(lengthPrefixLength)
+
+      // Reject lengths that could have been encoded with a shorter prefix
+      const minLength = Math.max(128, 1 << ((lengthPrefixLength - 1) * 8))
+      if (actualLength < minLength) {
+        throw new ParseError('Length prefix encoding is not canonical: ' +
+          actualLength + ' encoded in ' + lengthPrefixLength + ' bytes')
+      }
+
+      return actualLength
     }
 
     return length
@@ -273,6 +288,9 @@ Reader.LOWER_SEVEN_BITS = 0x7F
 // Largest integer (in bytes) that is safely representable in JavaScript
 // => Math.floor(Number.MAX_SAFE_INTEGER.toString(2).length / 8)
 Reader.MAX_INT_BYTES = 6
+
+// Largest allowable length prefix uint
+Reader.MAX_LENGTH_PREFIX_LENGTH = 4
 
 // Create {read,peek,skip}UInt{8,16,32,64} shortcuts
 ;['read', 'peek', 'skip'].forEach((verb) => {

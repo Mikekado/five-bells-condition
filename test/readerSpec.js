@@ -442,4 +442,29 @@ describe('Reader', function () {
       assert.equal(this.reader.cursor, 2)
     })
   })
+
+  describe('readVarOctetString', function () {
+    it('should read a zero-length variable-length octet string', function () {
+      const result = this.reader.readVarOctetString()
+
+      assert.equal(result.toString('hex'), '')
+      assert.equal(this.reader.cursor, 1)
+    })
+
+    it('should read a one-byte variable-length octet string', function () {
+      this.reader.skip(1)
+      const result = this.reader.readVarOctetString()
+
+      assert.equal(result.toString('hex'), '02')
+      assert.equal(this.reader.cursor, 3)
+    })
+
+    it('should read a seven-byte variable-length octet string', function () {
+      this.reader.skip(7)
+      const result = this.reader.readVarOctetString()
+
+      assert.equal(result.toString('hex'), '08090a0b0c0d0e')
+      assert.equal(this.reader.cursor, 15)
+    })
+  })
 })

@@ -67,8 +67,9 @@ class Reader {
    * @return {Number} Contents of next byte.
    */
   readUInt (length) {
+    if (length === 0) return 0
     if (length > Reader.MAX_INT_BYTES) {
-      throw new Error('Tried too read too large integer (requested: ' +
+      throw new Error('Tried to read too large integer (requested: ' +
         length + ', max: ' + Reader.MAX_INT_BYTES + ')')
     }
     this.ensureAvailable(length)
@@ -84,8 +85,9 @@ class Reader {
    * @return {Number} Contents of the next byte.
    */
   peekUInt (length) {
+    if (length === 0) return 0
     if (length > Reader.MAX_INT_BYTES) {
-      throw new Error('Tried too read too large integer (requested: ' +
+      throw new Error('Tried to read too large integer (requested: ' +
         length + ', max: ' + Reader.MAX_INT_BYTES + ')')
     }
     this.ensureAvailable(length)
@@ -109,9 +111,10 @@ class Reader {
    */
   readVarUInt () {
     const buffer = this.readVarOctetString()
+    if (!buffer.length) return 0
     if (buffer.length > Reader.MAX_INT_BYTES) {
       throw new ParseError('UInt of length ' + buffer.length +
-        'too large to parse as integer (max: ' + Reader.MAX_INT_BYTES + ')')
+        ' too large to parse as integer (max: ' + Reader.MAX_INT_BYTES + ')')
     }
 
     return buffer.readUIntBE(0, buffer.length)
@@ -124,10 +127,15 @@ class Reader {
    */
   peekVarUInt () {
     this.bookmark()
-    const value = this.readVarUInt()
-    this.restore()
+    try {
+      const value = this.readVarUInt()
+      this.restore()
 
-    return value
+      return value
+    } catch (err) {
+      this.restore()
+      throw err
+    }
   }
 
   /**
